@@ -1,4 +1,3 @@
-
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QMainWindow, QMessageBox
 from serial.tools import list_ports as ports
@@ -7,8 +6,17 @@ from modbus import ModbusBuilder
 import serial
 import time
 
-from PySide2.QtWidgets import QApplication
-from PySide2.QtCore import QSize, Qt, QRunnable, Slot
+
+class ErrorMassage(QMainWindow):
+    """error handler for general use """
+
+    def __init__(self, title, message):
+        super().__init__()
+        self.title = title
+        self.message = message
+        self.setWindowIcon(QIcon('icons/warning.png'))
+        QMessageBox.warning(self, self.title, self.message)
+
 
 class PumpMode(Enum):
     COUPLED = 0
@@ -78,17 +86,6 @@ class PortManger:
         if len(num) > 1:
             return num[1][num[1].find("(") + 1:-1]
         return None
-
-
-class ErrorMassage(QMainWindow):
-    """error handler for general use """
-
-    def __init__(self, title, message):
-        super().__init__()
-        self.setWindowIcon(QIcon(r"../QtIcons/warning.png"))
-        self.title = title
-        self.message = message
-        QMessageBox.warning(self, self.title, self.message)
 
 
 class PumpModbusCommandSender:

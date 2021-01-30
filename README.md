@@ -61,6 +61,14 @@ synchronous system).
     `Polynomial: G(X)=X16+X15+X2+1`.
 ---
   * ### Keithley Instruments Model 2450
+   <img src="https://www.distrelec.de/Web/WebShopImages/landscape_large/95/80/keithley-2450.jpg" alt="gui" width="300"/>     
+
+    
+    $ pip install -U pyvisa
+    [for more information](https://pyvisa.readthedocs.io/en/latest/introduction/getting.html)
+    
+
+    
         
   
 ---

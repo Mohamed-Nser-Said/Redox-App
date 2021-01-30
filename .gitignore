@@ -2,6 +2,7 @@
 trash
 HDFViewer
 venv
-parkinglot.py
-procedure.py
+ignor_/parkinglot.py
+ignor_/procedure.py
+ignor_
 __pycache__
