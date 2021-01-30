@@ -1,3 +1,4 @@
+from PySide2 import QtWidgets
 from PySide2.QtCore import QSize, Signal, Qt
 from PySide2.QtGui import QIcon, QKeySequence
 from PySide2.QtWidgets import QAction, QApplication, QMainWindow, QStatusBar, QToolBar, QFileDialog, QTabWidget
@@ -218,24 +219,30 @@ class NewProjectTab(QTabWidget):
         sub1 = QMdiSubWindow()
         sub1.setWindowIcon(icon('new_table.png'))
 
-        sub1.setWidget(TableViewer(np.arange(0,100).reshape(5,20)))
-        sub1.setWidget(QLabel("test"))
+        sub1.setWidget(TableViewer())
         mdi.addSubWindow(sub1)
-
-        self.graphWidget = pg.PlotWidget()
-
-        hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-        self.graphWidget.setBackground("w")
-        self.graphWidget.plot(hour, temperature)
-
-        sub2 = QMdiSubWindow()
-        sub2.setWidget(self.graphWidget)
-        mdi.addSubWindow(sub2)
-
-        sub2.show()
-
         sub1.show()
+        ##############################
+        # sub2 = QMdiSubWindow()
+        #
+        # w = QWidget()
+        # l = QGridLayout()
+        # w.setLayout(l)
+        # graphWidget = pg.PlotWidget()
+        # graphWidget.setBackground("w")
+        # hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        # temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
+        # graphWidget.plot(hour, temperature)
+        # l.addWidget(graphWidget)
+        # ############################
+        #
+        # sub2.setWidget(w)
+        # mdi.addSubWindow(sub2)
+        #
+        #
+        # sub2.show()
+
+
         # self.append_new_widget()
 
         i = self.addTab(mdi, project_name)
@@ -303,32 +310,32 @@ class CreatNewTableAction(QAction):
         self.SetNewTableDialog.show()
 
 
-class CreateNewGraphAction(QAction):
-    def __init__(self, parent):
-        super().__init__()
-        self.setParent(parent)
-        self.setText("New Graph")
-        self.setStatusTip("Creat a New Graph")
-        self.setIcon(icon("line-graph.png"))
-        # self.SetNewTableDialog = SetNewTableDialog()
-        # self.SetNewTableDialog.cancel_QPushButton.clicked.connect(self.SetNewTableDialog.close)
-        # self.SetNewTableDialog.save_QPushButton.clicked.connect(self.create_new_table)
-        # self.triggered.connect(self.show_table_dialog)
-        self.triggered.connect(self.create_new_graph)
-
-    def create_new_graph(self):
-
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
-        sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
-
-        toolbar = NavigationToolbar(sc, self)
-
-        layout = QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(sc)
-
-        widget = QWidget()
-        widget.setLayout(layout)
+# class CreateNewGraphAction(QAction):
+#     def __init__(self, parent):
+#         super().__init__()
+#         self.setParent(parent)
+#         self.setText("New Graph")
+#         self.setStatusTip("Creat a New Graph")
+#         self.setIcon(icon("line-graph.png"))
+#         # self.SetNewTableDialog = SetNewTableDialog()
+#         # self.SetNewTableDialog.cancel_QPushButton.clicked.connect(self.SetNewTableDialog.close)
+#         # self.SetNewTableDialog.save_QPushButton.clicked.connect(self.create_new_table)
+#         # self.triggered.connect(self.show_table_dialog)
+#         self.triggered.connect(self.create_new_graph)
+#
+#     def create_new_graph(self):
+#
+#         sc = MplCanvas(self, width=5, height=4, dpi=100)
+#         sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
+#
+#         toolbar = NavigationToolbar(sc, self)
+#
+#         layout = QVBoxLayout()
+#         layout.addWidget(toolbar)
+#         layout.addWidget(sc)
+#
+#         widget = QWidget()
+#         widget.setLayout(layout)
 
 
 class OpenTableAction(QAction):
