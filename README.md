@@ -3,10 +3,7 @@
 
 ![](https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/manimage.png)
 
-  > ### This project provides simple control GUI used to control Redox Flow Battery cell, this project is a combination of hardware and software, python is used as a controlling software..
-
----
-<img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui3.jpg" alt="gui" width="450"/>
+  > ### This project provides simple control GUI used to control Redox Flow Battery cell.
 
 ---
 
@@ -23,23 +20,28 @@
 
    This is the source code for the [`redox flow battery`](https://en.wikipedia.org/wiki/Flow_battery) `GUI`,
   the `GUI` is built using the python version of `Qt5`  [**`pyside2`**](https://doc.qt.io/qtforpython/index.html), the system consists
-   of the `cell itself`, `Shenchen Peristaltic Pump`,
-   the `GUI` provides speed control, start/stop, direction, and Modbus sender.
-   the program handles all required Modbus communication via USB port.   
+   of the `cell itself`, `Shenchen Peristaltic Pump` and Keithley Instruments Model 2450
+    
 ---
 * ## Start
     Download the repository, run the `__main__` python file which contains the main GUI.
 ---
 * ## Packages
 
-Package        | Version
----------------|-------
-numpy           |1.19.5|
-pandas          |1.2.0|
-PyQt5           |5.15.2|
-pyqtgraph       |0.11.1|
-pyserial        |3.5|
-PySide2         |5.15.2|
+
+Package                           | Version
+----------------------------------| -------------------
+conda                             | 4.9.2
+h5py                              | 2.10.0
+matplotlib                        | 3.3.2
+numpy                             | 1.19.2
+pandas                            | 1.1.3
+PyQt5                             | 5.15.2
+pyqtgraph                         | 0.11.0
+pyserial                          | 3.5
+PySide2                           | 5.15.2
+qtmodern                          | 0.2.0
+ViTables                          | 3.0.2
 
 ---
 * ## Hardware
@@ -83,18 +85,6 @@ synchronous system).
 # **Main Dashboard** 
  <img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui4.jpg" alt="gui" width="400"/>
 
-# **Pump GUI** 
-  <img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui1.jpg" alt="gui" width="200"/>   <img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui3.jpg" alt="gui" width="200"/>   <img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui2.jpg" alt="gui" width="200"/>   
-
-<img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui7.jpg" alt="gui" width="300"/>
-
-# **Setting panel**
-<img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui5.jpg" alt="gui" width="300"/>  
-
-# **ModBus Sender**
-
-
-<img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/pumpgui6.jpg" alt="gui" width="300"/>
 
 
   
