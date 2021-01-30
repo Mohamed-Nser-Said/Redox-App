@@ -89,8 +89,8 @@ synchronous system).
     [for more information](https://wiki.qt.io/Qt_for_Python)
     
     
-# **Main Dashboard** 
- <img src="https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/new_des" alt="gui" width="400"/>
+# **Main APP** 
+ <img src="https://github.com/Mohamed-Nser-Said/RDF_project/blob/main/icons/new_des.jpg?raw=true" alt="gui" width="700"/>
 
 
 
