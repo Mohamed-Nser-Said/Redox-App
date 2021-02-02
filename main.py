@@ -6,10 +6,10 @@ from PySide2.QtWidgets import QMdiArea, QMdiSubWindow, QDockWidget, QListWidget,
 from PySide2.QtWidgets import QLabel, QLineEdit, QGridLayout, QHBoxLayout, QGroupBox, QComboBox, QWidget
 from PySide2.QtWidgets import QSizePolicy
 
-from RDF_project_new_design.ignor_.procedure import TableViewer
+from ignor_.procedure import TableViewer
 from widgets_builder import PumpAbstract, icon, special_characters_detector, MplCanvas
 from widgets_builder import NewProjectSetNameDialog, SetNewTableDialog, ErrorMassage, Label, FileTreeViewer
-from api import PumpMode, Pump, PumpModbusCommandSender
+from control_api import PumpMode, Pump, PumpModbusCommandSender
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget, plot
 import numpy as np
@@ -18,8 +18,6 @@ import qtmodern.windows
 import os
 import sys
 import tables as tb
-
-
 
 MAIN_PROJECTS_SAVED_FILE = "saved_projects"
 SUB_MAIN_PROJECTS_SAVED_FILE = ["hsf5-data", 'graphs', 'reports', 'notes']
@@ -215,13 +213,8 @@ class NewProjectTab(QTabWidget):
 
     def add_new_tab(self, project_name="None"):
         mdi = QMdiArea()
+        mdi.ViewMode(QMdiArea.TabbedView)
 
-        sub1 = QMdiSubWindow()
-        sub1.setWindowIcon(icon('new_table.png'))
-
-        sub1.setWidget(TableViewer())
-        mdi.addSubWindow(sub1)
-        sub1.show()
         ##############################
         # sub2 = QMdiSubWindow()
         #
@@ -242,17 +235,22 @@ class NewProjectTab(QTabWidget):
         #
         # sub2.show()
 
-
         # self.append_new_widget()
 
         i = self.addTab(mdi, project_name)
         self.setCurrentIndex(i)
 
-    def append_new_widget(self):
-        pass
+    def append_new_tabel(self, table_info=None, data=None):
+        print(table_info)
+        mdi = self.currentWidget()
+        sub1 = QMdiSubWindow()
+        sub1.setWindowIcon(icon('new_table.png'))
+        sub1.setWidget(TableViewer())
+        mdi.addSubWindow(sub1)
+        sub1.show()
 
     def current_tab_changed(self, i):
-        pass
+        print(i)
 
     def update_title(self):
         self.tabs.currentWidget().page().title()
@@ -285,6 +283,8 @@ class NewProjectAction(QAction):
 
 
 class CreatNewTableAction(QAction):
+    NewTableCreatedSignal = Signal(dict)
+
     def __init__(self, parent):
         super().__init__()
         self.setText("New Table")
@@ -297,11 +297,17 @@ class CreatNewTableAction(QAction):
         self.setParent(parent)
 
     def create_new_table(self):
-        self.table_name = self.SetNewTableDialog.file_name_QLineEdit.text()
+        table_name = self.SetNewTableDialog.file_name_QLineEdit.text()
+        project_name = self.SetNewTableDialog.table_QComboBox.currentText()  # HDF5 file
+        n_row = self.SetNewTableDialog.table_row_QSpinBox.value()
+        n_col = self.SetNewTableDialog.table_col_QSpinBox.value()
 
-        if special_characters_detector(self.table_name):
+        if special_characters_detector(table_name):
             return
-        DataBase(self.SetNewTableDialog.table_QComboBox.currentText()).create_new_array(self.table_name, np.array([]))
+
+        data = DataBase(project_name).create_new_array(name=table_name, data=np.arange(0, 100).reshape(20, 5))
+        self.NewTableCreatedSignal.emit(
+            {"table_name": table_name, "project_name": project_name, "data": data, "size": (n_row, n_col)})
         self.SetNewTableDialog.hide()
 
     def show_table_dialog(self):
@@ -359,25 +365,6 @@ class DataBase:
         with tb.open_file(self.main_file, "a") as t:
             pass
 
-    def create_new_project(self, project_name):
-        # creat a new HDF5 file group
-        if special_characters_detector(project_name):
-            return False
-        try:
-            with tb.open_file(self.main_file, "a") as t:
-                t.create_group(t.root, project_name)
-
-                t.create_group(f"/{project_name}", "Tables")
-                t.create_group(f"/{project_name}", "Graphs")
-                t.create_group(f"/{project_name}", "Reports")
-                t.create_group(f"/{project_name}", "Text")
-                t.create_group(f"/{project_name}", "dataset")
-                return True
-
-        except tb.exceptions.NodeError:
-            ErrorMassage("Name already exist", "this name is already exist\nplease try different name")
-            return False
-
     def create_new_table(self, table_name):
 
         class Description(tb.IsDescription):
@@ -390,20 +377,28 @@ class DataBase:
         try:
             with tb.open_file(self.main_file, "a") as t:
                 a = t.create_table(t.root, table_name, Description)
-                a.append(image)
+                # a.append(image)
 
         except tb.exceptions.NodeError:
             return ErrorMassage("Name already exist", "this name is already exist\nplease try different name")
 
-    def create_new_array(self, dataset_name, array):
-        with tb.open_file(self.main_file, "a") as f:
-            f.create_array(f.root, dataset_name, obj=array)
+    def create_new_array(self, name, size=None, data=np.array([])):
+        if name in self.get_all_table_name_list:
+            return ErrorMassage("Name already exist", "this name is already exist\nplease try different name")
+
+        else:
+            try:
+                with tb.open_file(self.main_file, "a") as f:
+                    a = f.create_array(f.root, name, obj=data)
+                    return a.read()
+            except:
+                return ErrorMassage("Error", "something went wrong try again")
 
     @property
-    def get_old_projects_name_list(self):
+    def get_all_table_name_list(self):
         with tb.open_file(self.main_file, "a")as t:
-            name_list = list(t.root.__members__)
-        return name_list
+            table_name_list = list(t.root.__members__)
+        return table_name_list
 
 
 class HelpAction(QAction):
@@ -587,14 +582,15 @@ class MainWindow(QMainWindow):
         # QDocks
         self.PumpQWidget = PumpQWidget()
         self.PumpQWidget_dock = CreateDockWindows(title="Pump control", parent=self, widget=self.PumpQWidget,
-                                                  area=Qt.RightDockWidgetArea|Qt.BottomDockWidgetArea)
+                                                  area=Qt.RightDockWidgetArea | Qt.BottomDockWidgetArea)
         self.FileTreeViewer = FileTreeViewer()
         self.FileTreeViewer_dock = CreateDockWindows(title="File Tree", parent=self, widget=self.FileTreeViewer,
                                                      area=Qt.LeftDockWidgetArea)
 
         self.SCPICommandLine = SCPICommandLine()
-        self.SCPICommandLine_dock = CreateDockWindows(title="SCPI Command Line", parent=self, widget=self.SCPICommandLine,
-                                                      area=Qt.BottomDockWidgetArea|Qt.TopDockWidgetArea)
+        self.SCPICommandLine_dock = CreateDockWindows(title="SCPI Command Line", parent=self,
+                                                      widget=self.SCPICommandLine,
+                                                      area=Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.PumpQWidget_dock)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.FileTreeViewer_dock)
@@ -634,7 +630,7 @@ class MainWindow(QMainWindow):
         #####################
 
         self.NewProjectAction.NewProjectAddedSignal.connect(self.new_project_created)
-
+        self.CreatNewTableAction.NewTableCreatedSignal.connect(self.NewProjectTab.append_new_tabel)
         #########################
         self.menu = self.menuBar()
         self.file = self.menu.addMenu("File")
@@ -713,6 +709,9 @@ class MainWindow(QMainWindow):
             self.label.hide()
             self.setCentralWidget(self.NewProjectTab)
             self.add = True
+
+    def test(self, a):
+        print(a)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 
 ![](https://github.com/Mohamed-Nser-Said/RFB_control_sys/blob/master/main_simple_ui/icons/manimage.png)
 
-  > ### This project provides simple control GUI used to control Redox Flow Battery cell.
+  > ### This project provides simple control GUI used to control Redox Flow Battery cell with some analytic tools.
 
 ---
 
@@ -18,13 +18,13 @@
 ---
 * ## Description 
 
-   This is the source code for the [`redox flow battery`](https://en.wikipedia.org/wiki/Flow_battery) `GUI`,
+   This is the source code for the [`redox flow battery`](https://en.wikipedia.org/wiki/Flow_battery) control `GUI`,
   the `GUI` is built using the python version of `Qt5`  [**`pyside2`**](https://doc.qt.io/qtforpython/index.html), the system consists
-   of the `cell itself`, `Shenchen Peristaltic Pump` and Keithley Instruments Model 2450
+   of the `cell itself`, `Shenchen Peristaltic Pump` and Keithley Instruments Model 2450 ,HDF5 files was used for data storage, and other packages.
     
 ---
 * ## Start
-    Download the repository, run the `__main__` python file which contains the main GUI.
+    Download the repository, run the `main` python file which contains the main GUI.
 ---
 * ## Packages
 

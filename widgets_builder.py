@@ -12,10 +12,11 @@ from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QComboBox, QLabel, QGridLayout, QWidget, QDoubleSpinBox, QPushButton, QHBoxLayout
 from PySide2.QtWidgets import QDialog, QLineEdit, QMessageBox, QTreeView, QSizePolicy, QFileSystemModel
 from PySide2.QtWidgets import QMainWindow, QSpinBox, QGroupBox, QApplication
-from api import PortManger
+from control_api import PortManger
 import keyword
 
 matplotlib.use("Qt5Agg")
+
 
 class Label(QLabel):
     def __init__(self, font_size=16, weight=36, text="new label"):
