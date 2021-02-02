@@ -19,9 +19,9 @@
 * ## Description 
 
    This is the source code for the [`redox flow battery`](https://en.wikipedia.org/wiki/Flow_battery) control `GUI`,
-  the `GUI` is built using the python version of `Qt5`  [**`pyside2`**](https://doc.qt.io/qtforpython/index.html), the system consists
-   of the `cell itself`, `Shenchen Peristaltic Pump` and Keithley Instruments Model 2450 ,HDF5 files was used for data storage, and other packages.
-    
+  the `GUI` is built using the python version of `Qt5`  [**`pyside2`**](https://doc.qt.io/qtforpython/index.html), 
+  the system consists of the `cell itself`, `Shenchen Peristaltic Pump` and Keithley Instruments Model 2450 ,
+  HDF5 files was used for data storage.
 ---
 * ## Start
     Download the repository, run the `main` python file which contains the main GUI.
@@ -61,7 +61,11 @@ synchronous system).
     `Polynomial: G(X)=X16+X15+X2+1`.
 ---
   * ### Keithley Instruments Model 2450
-    <img src="https://www.distrelec.de/Web/WebShopImages/landscape_large/95/80/keithley-2450.jpg" alt="gui" width="300"/> 
+    <img src="https://www.distrelec.de/Web/WebShopImages/landscape_large/95/80/keithley-2450.jpg" alt="gui" width="300"/>
+    this instrument used for charging/discharging and a variety of measurements, data will be stored in an HDF5 file for
+    other usage, the instrument uses `SCPI` standard as a syntax, some functionality has its own `GUI`, other commands can be
+    accessed via `SCPI command line`.
+    
     `$ pip install -U pyvisa`
     
     [for more information](https://pyvisa.readthedocs.io/en/latest/introduction/getting.html)
@@ -72,7 +76,8 @@ synchronous system).
   
 ---
   * ### NI6001
-     the National Instruments USB-6001/6002/6003 data acquisition '(DAQ) devices'. The NI-DAQmx Python where used, nidaqmx can be installed with pip:
+     the National Instruments USB-6001/6002/6003 data acquisition '(DAQ) devices'. The NI-DAQmx Python where used,
+    nidaqmx can be installed with pip:
     
     `$ python -m pip install nidaqmx`
      
