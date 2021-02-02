@@ -215,28 +215,6 @@ class NewProjectTab(QTabWidget):
         mdi = QMdiArea()
         mdi.ViewMode(QMdiArea.TabbedView)
 
-        ##############################
-        # sub2 = QMdiSubWindow()
-        #
-        # w = QWidget()
-        # l = QGridLayout()
-        # w.setLayout(l)
-        # graphWidget = pg.PlotWidget()
-        # graphWidget.setBackground("w")
-        # hour = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        # temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-        # graphWidget.plot(hour, temperature)
-        # l.addWidget(graphWidget)
-        # ############################
-        #
-        # sub2.setWidget(w)
-        # mdi.addSubWindow(sub2)
-        #
-        #
-        # sub2.show()
-
-        # self.append_new_widget()
-
         i = self.addTab(mdi, project_name)
         self.setCurrentIndex(i)
 
@@ -330,18 +308,7 @@ class CreatNewTableAction(QAction):
 #         self.triggered.connect(self.create_new_graph)
 #
 #     def create_new_graph(self):
-#
-#         sc = MplCanvas(self, width=5, height=4, dpi=100)
-#         sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
-#
-#         toolbar = NavigationToolbar(sc, self)
-#
-#         layout = QVBoxLayout()
-#         layout.addWidget(toolbar)
-#         layout.addWidget(sc)
-#
-#         widget = QWidget()
-#         widget.setLayout(layout)
+#           pass
 
 
 class OpenTableAction(QAction):
