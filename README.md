@@ -62,6 +62,7 @@ synchronous system).
 ---
   * ### Keithley Instruments Model 2450
     <img src="https://www.distrelec.de/Web/WebShopImages/landscape_large/95/80/keithley-2450.jpg" alt="gui" width="300"/>
+    
     this instrument used for charging/discharging and a variety of measurements, data will be stored in an HDF5 file for
     other usage, the instrument uses `SCPI` standard as a syntax, some functionality has its own `GUI`, other commands can be
     accessed via `SCPI command line`.

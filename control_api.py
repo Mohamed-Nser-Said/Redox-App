@@ -187,13 +187,13 @@ def step_increase(start, stop, steps, duration, send_to):
 
 if __name__ == "__main__":
     m = ModbusBuilder()
-    p = PumpModbusCommandSender()
+
     start_ = m.build_start().get_modbus
     stop_ = m.build_stop().get_modbus
     speed_ = m.build_change_speed(30).get_modbus
 
     # time.sleep(0.2)
-
+    p = PumpModbusCommandSender()
     p.send_pump(data=stop_, send_to=Pump.MASTER)
 
     # p.send_pump(data=s,send_to=Pump.MASTER)

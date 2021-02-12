@@ -1,12 +1,8 @@
 import os
 import sys
-import qtmodern.styles
-import qtmodern.windows
-import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-from PySide2.QtCore import Qt, QSize
+# import qtmodern.styles
+# import qtmodern.windows
+from PySide2.QtCore import Qt, QSize, Signal
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QComboBox, QLabel, QGridLayout, QWidget, QDoubleSpinBox, QPushButton, QHBoxLayout
@@ -14,8 +10,6 @@ from PySide2.QtWidgets import QDialog, QLineEdit, QMessageBox, QTreeView, QSizeP
 from PySide2.QtWidgets import QMainWindow, QSpinBox, QGroupBox, QApplication
 from control_api import PortManger
 import keyword
-
-matplotlib.use("Qt5Agg")
 
 
 class Label(QLabel):
@@ -26,7 +20,8 @@ class Label(QLabel):
             QtWidgets.QSizePolicy.Maximum)
         f = self.font()
         f.setPointSize(font_size)
-        f.setWeight(weight)
+        # f.setWeight(weight)
+        # self.setStyleSheet('background-color:#bfbfbf')
         self.setFont(f)
         self.setText(text)
         self.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
@@ -89,9 +84,9 @@ class PumpAbstract(QWidget):
         layout.addWidget(self.pump_direction_QLabel, 2, 0)
         layout.addWidget(self.pump_direction_QComboBox, 2, 1)
 
-        self.start_stop_QPushButton = QPushButton("Start")
-        self.start_stop_QPushButton.setCheckable(True)
-        layout.addWidget(self.start_stop_QPushButton, 3, 1)
+        self.pump_send_state_QPushButton = QPushButton("send")
+        # self.pump_send_state_QPushButton.setCheckable(True)
+        layout.addWidget(self.pump_send_state_QPushButton, 3, 1)
         layout.setSpacing(3)
         group_box_pump = QGroupBox(name)
         group_box_pump.setLayout(layout)
@@ -114,12 +109,12 @@ class StepIncreaseWindow(QMainWindow):
             QtWidgets.QSizePolicy.Preferred,
             QtWidgets.QSizePolicy.Preferred)
         self.setWindowTitle("speed adjusting")
-        self.setWindowIcon(QIcon(r"../QtIcons/settings.png"))
+        self.setWindowIcon(icon("stepincrease.png"))
 
         layout = QGridLayout()
         self.Select_pump = QLabel('Select Pump')
         self.Select_pump_QComboBox = QComboBox()
-        self.Select_pump_QComboBox.addItems(["pump 1", "Pump 2", "Both"])
+        self.Select_pump_QComboBox.addItems(PortManger().get_ports_list)
         layout.addWidget(self.Select_pump, 0, 0)
         layout.addWidget(self.Select_pump_QComboBox, 0, 1)
 
@@ -189,6 +184,17 @@ class NewProjectSetNameDialog(QDialog):
         self.setWindowIcon(icon("plus.png"))
 
 
+class OpenProjectDialog(NewProjectSetNameDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Open Project")
+        self.file_name_QLabel.setText("Project Name")
+        self.warning_QLabel.setText("Select your Project Please")
+        self.save_QPushButton.setText("Open")
+        self.project_list_QComboBox = QComboBox()
+        self.layout.addWidget(self.project_list_QComboBox, 2, 1, 1, 2)
+
+
 class SetNewTableDialog(NewProjectSetNameDialog):
     def __init__(self):
         super().__init__()
@@ -212,39 +218,56 @@ class SetNewTableDialog(NewProjectSetNameDialog):
 
 
 class FileTreeViewer(QTreeView):
-    def __init__(self):
+    FileOpenedSignal = Signal(dict)
+
+    def __init__(self, parent):
         super().__init__()
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.project_name = None
 
-        model = QFileSystemModel()
-        model.setRootPath(os.getcwd())
+        self.model = QFileSystemModel()
 
-        # tree = QTreeView()
-        self.setModel(model)
-
-        self.setRootIndex(model.index(os.path.join(os.getcwd(), 'saved_projects')))
+    def new_project_added(self):
+        self.setModel(self.model)
+        self.model.setRootPath(os.getcwd())
+        self.setRootIndex(self.model.index(os.path.join(os.getcwd(), 'saved_projects', self.project_name)))
         self.hideColumn(1)
         self.hideColumn(2)
         self.hideColumn(3)
 
+    def mouseDoubleClickEvent(self, e):
+        try:
+            file_path = self.model.filePath(self.currentIndex())
+            file_name = self.currentIndex().data().split(".")[0]
+            file_type = os.path.splitext(file_path)[1]
+
+            file = {'file_path': file_path,
+                    'file_name': file_name,
+                    'file_type': file_type
+                    }
+
+            self.FileOpenedSignal.emit(file)
+
+        except Exception as e:
+            self.error_message(str(e))
+
+    def error_message(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()
+
     def sizeHint(self):
         return QSize(150, 200)
-
-
-class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super().__init__(fig)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
 
-    win = StepIncreaseWindow()
+    win = OpenProjectDialog()
 
-    qtmodern.styles.dark(app)
+    # qtmodern.styles.dark(app)
     # mw = qtmodern.windows.ModernWindow(win)
     win.show()
 

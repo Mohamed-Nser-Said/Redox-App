@@ -7,4 +7,5 @@ venv
 ignor_/parkinglot.py
 ignor_/procedure.py
 ignor_
+_main.py
 __pycache__
