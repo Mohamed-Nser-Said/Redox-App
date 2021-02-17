@@ -1,3 +1,5 @@
+import socket
+import threading
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QMainWindow, QMessageBox
 from serial.tools import list_ports as ports
@@ -5,6 +7,63 @@ from enum import Enum
 from modbus import ModbusBuilder
 import serial
 import time
+
+
+class RemoteManger:
+    def __init__(self):
+        self.ip_addr = socket.gethostbyname(socket.gethostname())
+        self.port = 5051
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        self.server.bind((self.ip_addr, self.port))
+        self.server.settimeout(2)
+
+        self.connection = False
+        self.current_state = 'Ready'
+
+        self.conn, self.addr = None, None
+
+    def server_listen(self):
+        self.server.listen()
+        try:
+            self.conn, self.addr = self.server.accept()
+            self.connection = True
+            self.current_state = f'Connected with IP:{self.addr}'
+        except socket.timeout:
+            self.current_state = f'[No connection] Time out 2 second'
+            self.connection = None
+
+    def data_send(self, msg):
+        self.conn.send(msg.encode('utf-8'))
+        thread = threading.Thread(target=self.data_receiver)
+        if self.connection:
+            return thread.start()
+
+    def data_receiver(self):
+        msg = self.conn.recv(2048)
+        return msg
+
+    def close_connection(self):
+        if self.conn is not None:
+            self.connection = False
+            self.current_state = f'Connection is Closed'
+            self.data_send("end")
+            self.conn.close()
+            self.conn = None
+
+            print('closed')
+
+    def get_ports_list(self):
+        self.conn.send('get_ports_list'.encode('utf-8'))
+        # self.close_connection
+        a = self.conn.recv(2048).decode('utf-8')
+        return eval(a)
+
+    def error_message(self, s):
+        dlg = QMessageBox(self)
+        dlg.setText(s)
+        dlg.setIcon(QMessageBox.Critical)
+        dlg.show()
 
 
 class ErrorMassage(QMainWindow):
@@ -34,9 +93,12 @@ class PortManger:
     this is port manger to check how many pumps are connected and return the specific port for each pump
     """
 
-    def __init__(self, s="USB-SERIAL CH340"):
-        self.__port = [str(i) for i in ports.comports(include_links=False)]
-        self.__s = s
+    def __init__(self, remote=False, s="USB-SERIAL CH340"):
+        if not remote:
+            self.__port = [str(i) for i in ports.comports(include_links=False)]
+            self.__s = s
+        elif remote:
+            pass
 
     @property
     def get_ports_list(self):
@@ -93,14 +155,6 @@ class PumpModbusCommandSender:
     this class manage the connection of the Pumps though the usb Ports, send the message
     with update connection method
     """
-
-    def __init__(self):
-        self.ModbusBuilder = ModbusBuilder()
-        self.start = self.ModbusBuilder.build_start()
-        self.stop = self.ModbusBuilder.build_stop()
-        self.speed = self.ModbusBuilder.build_change_speed(1)
-        self.direction_cc = self.ModbusBuilder.build_flow_direction("cw")
-        self.direction_ccw = self.ModbusBuilder.build_flow_direction("ccw")
 
     def send_pump(self, data, send_to):
         if self._update_connection():
@@ -186,18 +240,20 @@ def step_increase(start, stop, steps, duration, send_to):
 
 
 if __name__ == "__main__":
-    m = ModbusBuilder()
-
-    start_ = m.build_start().get_modbus
-    stop_ = m.build_stop().get_modbus
-    speed_ = m.build_change_speed(30).get_modbus
-
-    # time.sleep(0.2)
-    p = PumpModbusCommandSender()
-    p.send_pump(data=stop_, send_to=Pump.MASTER)
+    # m = ModbusBuilder()
+    #
+    # start_ = m.build_start().get_modbus
+    # stop_ = m.build_stop().get_modbus
+    # speed_ = m.build_change_speed(30).get_modbus
+    #
+    # # time.sleep(0.2)
+    # p = PumpModbusCommandSender()
+    # p.send_pump(data=stop_, send_to=Pump.MASTER)
 
     # p.send_pump(data=s,send_to=Pump.MASTER)
     # time.sleep(0.2)
     # p.send_pump(data=stop_, send_to=Pump.MASTER)
     # step_increase(5, 24, 5, 1, Pump.BOTH)
-
+    s = RemoteManger()
+    s.server_listen()
+    s.get_ports_list()

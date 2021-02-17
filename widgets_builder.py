@@ -5,7 +5,8 @@ import sys
 from PySide2.QtCore import Qt, QSize, Signal
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QComboBox, QLabel, QGridLayout, QWidget, QDoubleSpinBox, QPushButton, QHBoxLayout
+from PySide2.QtWidgets import QComboBox, QLabel, QGridLayout, QWidget, QDoubleSpinBox, QPushButton, QHBoxLayout, \
+    QListWidget, QListWidgetItem
 from PySide2.QtWidgets import QDialog, QLineEdit, QMessageBox, QTreeView, QSizePolicy, QFileSystemModel
 from PySide2.QtWidgets import QMainWindow, QSpinBox, QGroupBox, QApplication
 from control_api import PortManger
@@ -16,8 +17,8 @@ class Label(QLabel):
     def __init__(self, font_size=16, weight=36, text="new label"):
         super().__init__()
         self.setSizePolicy(
-            QtWidgets.QSizePolicy.Maximum,
-            QtWidgets.QSizePolicy.Maximum)
+            QtWidgets.QSizePolicy.Preferred,
+            QtWidgets.QSizePolicy.Preferred)
         f = self.font()
         f.setPointSize(font_size)
         # f.setWeight(weight)
@@ -60,8 +61,8 @@ class PumpAbstract(QWidget):
     def __init__(self, name):
         super().__init__()
         self.setSizePolicy(
-            QtWidgets.QSizePolicy.Maximum,
-            QtWidgets.QSizePolicy.Maximum)
+            QtWidgets.QSizePolicy.Preferred,
+            QtWidgets.QSizePolicy.Preferred)
 
         layout = QGridLayout()
 
@@ -195,26 +196,102 @@ class OpenProjectDialog(NewProjectSetNameDialog):
         self.layout.addWidget(self.project_list_QComboBox, 2, 1, 1, 2)
 
 
-class SetNewTableDialog(NewProjectSetNameDialog):
+class CreateNewGraphDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("New 2D Graph")
+        self.setWindowIcon(icon("plus.png"))
+        self.file_name_QLabel = QLabel("x axes dataset")
+        self.warning_QLabel = QLabel("Please select the datasets for x and y axes")
+        self.file_name2_QLabel = QLabel("y axes dataset")
+
+        self.save_QPushButton = QPushButton("Create")
+        self.cancel_QPushButton = QPushButton("Cancel")
+        self.select_color_QPushButton = QPushButton("Select Color")
+
+        self.x_dataset_list_QComboBox = QComboBox()
+        self.y_dataset_list_QComboBox = QComboBox()
+        self.size_QComboBox = QSpinBox()
+        self.plot_name_QLabel = QLabel("Plot Name")
+        self.title_QLabel = QLabel("Title")
+        self.x_axis_name_QLabel = QLabel("X-Axis")
+        self.y_axis_QLabel = QLabel("Y-Axis")
+        self.size_QLabel = QLabel("Size")
+
+        self.plot_name_QLineEdit = QLineEdit('Plot Name')
+        self.title_QLineEdit = QLineEdit('Title')
+        self.x_axis_name_QLineEdit = QLineEdit('X-Axis')
+        self.y_axis_name_QLineEdit = QLineEdit('Y-Axis')
+
+        self.layout = QGridLayout()
+
+        self.layout.addWidget(self.warning_QLabel, 0, 0, 1, 3)
+        self.layout.addWidget(self.file_name_QLabel, 2, 0)
+        self.layout.addWidget(self.x_dataset_list_QComboBox, 2, 1, 1, 2)
+        self.layout.addWidget(self.y_dataset_list_QComboBox, 3, 1, 1, 2)
+        self.layout.addWidget(self.file_name2_QLabel, 3, 0)
+
+        self.layout.addWidget(self.plot_name_QLabel, 4, 0)
+        self.layout.addWidget(self.plot_name_QLineEdit, 4, 1, 1, 2)
+
+        self.layout.addWidget(self.title_QLabel, 5, 0)
+        self.layout.addWidget(self.title_QLineEdit, 5, 1, 1, 2)
+
+        self.layout.addWidget(self.x_axis_name_QLabel, 6, 0)
+        self.layout.addWidget(self.x_axis_name_QLineEdit, 6, 1, 1, 2)
+
+        self.layout.addWidget(self.y_axis_QLabel, 7, 0)
+        self.layout.addWidget(self.y_axis_name_QLineEdit, 7, 1, 1, 2)
+
+        self.layout.addWidget(self.size_QLabel, 8, 0)
+        self.layout.addWidget(self.size_QComboBox, 8, 1, 1, 2)
+
+        self.layout.setVerticalSpacing(30)
+        self.layout.addWidget(self.save_QPushButton, 9, 0)
+        self.layout.addWidget(self.cancel_QPushButton, 9, 1)
+        self.layout.addWidget(self.select_color_QPushButton, 9, 2)
+        self.setLayout(self.layout)
+
+
+class NewTableDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
         self.setWindowTitle("Create New Table")
-        self.file_name_QLabel.setText("Table Name")
-        self.warning_QLabel.setText("You Have to choose where you want to save this table\nand the table Name"
-                                    " must be one word or multiple\nwords connected with '_'")
-        self.layout.setVerticalSpacing(12)
-        self.table_QComboBox = QComboBox()
-        self.table_QLabel = QLabel("Project Name")
-        self.layout.addWidget(self.table_QLabel, 1, 0)
-        self.layout.addWidget(self.table_QComboBox, 1, 1, 1, 2)
-        self.size_QLabel = QLabel("Size (n x m)")
-        self.layout.addWidget(self.size_QLabel, 3, 0)
+        self.setWindowIcon(icon("plus.png"))
+        self.layout = QGridLayout()
+        self.warning_QLabel = QLabel("These are the available data sets stored in this project "
+                                     "please drag and drop the preferred data")
 
-        self.table_col_QSpinBox = QSpinBox()
-        self.table_row_QSpinBox = QSpinBox()
+        self.table_name_QLabel = QLabel("Table Name")
+        self.table_name_QLineEdit = QLineEdit()
 
-        self.layout.addWidget(self.table_col_QSpinBox, 3, 1)
-        self.layout.addWidget(self.table_row_QSpinBox, 3, 2)
+        self.save_QPushButton = QPushButton("Create")
+        self.cancel_QPushButton = QPushButton("Cancel")
+
+        self.dataset_QListWidget = QListWidget()
+        self.dataset_QListWidget.setAcceptDrops(False)
+        self.dataset_QListWidget.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ContiguousSelection)
+
+        self.setGeometry(300, 350, 500, 300)
+        self.layout_h = QHBoxLayout()
+        self.layout_h.addWidget(self.save_QPushButton)
+        self.layout_h.addWidget(self.cancel_QPushButton)
+
+        self.layout.addWidget(self.warning_QLabel, 0, 0, 1, 2)
+        self.layout.addWidget(self.table_name_QLabel, 1, 0)
+        self.layout.addWidget(self.table_name_QLineEdit, 1, 1)
+        self.layout.addWidget(self.dataset_QListWidget, 2, 0, 1, 2)
+        self.layout.addLayout(self.layout_h, 3, 0, 1, 2)
+
+        self.setLayout(self.layout)
+
+    def add_list(self, items=['data set1', 'data set 2', 'data set3', 'data set 4']):
+
+        for i, j in enumerate(items):
+            l = QListWidgetItem(j)
+            l.setCheckState(Qt.CheckState.Unchecked)
+            self.dataset_QListWidget.insertItem(i + 1, l)
 
 
 class FileTreeViewer(QTreeView):
@@ -265,10 +342,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
 
-    win = OpenProjectDialog()
-
-    # qtmodern.styles.dark(app)
-    # mw = qtmodern.windows.ModernWindow(win)
+    win = NewTableDialog()
     win.show()
 
     app.exec_()

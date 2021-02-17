@@ -150,7 +150,7 @@ class ModbusBuilder:
         self.modbus = CRCGenerator(message).generate.get_full_code()  # generating the crc code
         return self
 
-    def build_flow_direction(self, direction: object = "cw") -> object:
+    def build_flow_direction(self, direction="cw"):
         message = f"{self.__slave_address}{self._function_code_int}" \
                   f"{self._register_address['Running_direction']}{self.data[direction]}"
         self.modbus = CRCGenerator(message).generate.get_full_code()  # generating the crc code
