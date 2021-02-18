@@ -2,64 +2,29 @@ from io import StringIO
 from random import randint
 import threading
 import h5py
+import serial
 from PySide2.QtCore import QSize, Qt, QAbstractTableModel, Signal, QTimer, QRunnable, Slot, QThreadPool
-from PySide2.QtGui import QIcon, QKeySequence, QFont, QSyntaxHighlighter, QTextCharFormat, QPixmap, QImage, QPalette, \
-    QColor
+from PySide2.QtGui import QKeySequence, QSyntaxHighlighter, QTextCharFormat, QPixmap, QImage, QPalette, QColor
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtWidgets import QApplication, QMainWindow, QStatusBar, QToolBar, QFileDialog, QTabWidget, QTextEdit, \
-    QAction, QVBoxLayout, QScrollArea, QColorDialog, QListWidget, QAbstractItemView, QListWidgetItem
+from PySide2.QtWidgets import QApplication, QMainWindow, QStatusBar, QToolBar, QFileDialog, QTabWidget, QTextEdit, QAction
+from PySide2.QtWidgets import QVBoxLayout, QScrollArea, QColorDialog, QListWidget, QAbstractItemView, QListWidgetItem
 from PySide2.QtWidgets import QLabel, QLineEdit, QGridLayout, QHBoxLayout, QGroupBox, QComboBox, QWidget, QPlainTextEdit
 from PySide2.QtWidgets import QMdiArea, QMdiSubWindow, QDockWidget, QTableView, QSizePolicy, QMessageBox, QPushButton
 from control_api import PumpMode, Pump, PumpModbusCommandSender, ModbusBuilder, RemoteManger, PortManger
-from widgets_builder import NewProjectSetNameDialog, NewTableDialog, ErrorMassage, Label, FileTreeViewer, \
-    CreateNewGraphDialog
+from widgets_builder import NewProjectSetNameDialog, NewTableDialog, ErrorMassage, Label, FileTreeViewer, light, dark
+from widgets_builder import CreateNewGraphDialog
 from widgets_builder import PumpAbstract, icon, special_characters_detector, StepIncreaseWindow, OpenProjectDialog
 import numpy as np
 import os
 import sys
 import pyvisa
+import pyqtgraph as pg
 
 MAIN_PROJECTS_SAVED_FILE = "saved_projects"
 SUB_MAIN_PROJECTS_SAVED_FILE = ["hsf5-data", 'Graphs', 'Reports', 'Notes', 'Procedure']
 
 if not os.path.exists(MAIN_PROJECTS_SAVED_FILE):
     os.mkdir(MAIN_PROJECTS_SAVED_FILE)
-
-import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-import pyqtgraph as pg
-from pyqtgraph import PlotWidget, plot
-
-matplotlib.use("Qt5Agg")
-
-
-class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=10):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super().__init__(fig)
-
-
-class GraphMaker1(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
-        sc.axes.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
-
-        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
-        toolbar = NavigationToolbar(sc, self)
-
-        layout = QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(sc)
-
-        # Create a placeholder widget to hold our toolbar and canvas.
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
 
 
 class GraphMaker(QMainWindow):
@@ -128,34 +93,67 @@ class NewGraphAction(QAction):
         self.color =  QColorDialog.getColor()
 
 
+# ser = serial.Serial(port="COM5", baudrate=9600, timeout=1)
+
+
+def test_generator():
+    while True:
+        try:
+            ser.write(b'g')
+            yield ser.read(5).decode('ascii')[:-2]
+        except Exception as e:
+            print(e)
+            yield randint(2, 100)
+
+
 class MonitorWidget(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
+        self.n = 100
+        self.time_stamp = [0]
+        self.reading = [0]
 
-        self.x = list(range(100))  # 100 time points
-        self.y = [randint(0, 100) for _ in range(100)]  # 100 data points
-
-        self.graphWidget.setBackground("w")
-
-        pen = pg.mkPen(color=(255, 0, 0))
-        self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)  # <1>
+        self.graphWidget.setBackground("000")
+        pen = pg.mkPen(color=(255, 0, 0), width=3)
+        self.plot = self.graphWidget.plot(self.time_stamp, self.reading, pen=pen)
 
         self.timer = QTimer()
-        self.timer.setInterval(50)
+        self.timer.setInterval(10)
         self.timer.timeout.connect(self.update_plot_data)
         self.timer.start()
+        ###################
+        self.data = test_generator()
+        self.data.__next__()
+        self.data.__next__()
+        self.data.__next__()
+        #############################
 
     def update_plot_data(self):
-        self.x = self.x[1:]  # Remove the first y element.
-        self.x.append(self.x[-1] + 1)  # Add a new value 1 higher than the last.
+        self.time_stamp.append(self.time_stamp[-1] + 50)
+        self.reading.append(int(self.data.__next__()))
 
-        self.y = self.y[1:]  # Remove the first
-        self.y.append(randint(0, 100))  # Add a new random value.
+        if len(self.time_stamp) > self.n:
+            self.time_stamp = self.time_stamp[1:]
+            self.reading = self.reading[1:]
 
-        self.data_line.setData(self.x, self.y)  # Update the data.
+        self.plot.setData(self.time_stamp, self.reading)
+
+
+class MonitorAction(QAction):
+    def __init__(self, parent):
+        super().__init__()
+        self.setParent(parent)
+        self.setText("Monitor")
+        self.setStatusTip("open monitor")
+        self.setIcon(icon("line-chart.png"))
+
+        self.triggered.connect(self.clicked)
+
+    def clicked(self):
+        self.parent().add_sub_win(MonitorWidget())
 
 
 class GraphViewer(QMainWindow):
@@ -251,6 +249,7 @@ class StepFunctionAction(QAction):
 
 
 class Capturing(list):
+    "stack over flow"
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
@@ -258,7 +257,7 @@ class Capturing(list):
 
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio  # free up some memory
+        del self._stringio
         sys.stdout = self._stdout
 
 
@@ -776,20 +775,6 @@ class DataBase:
             return f.get(name)[:]
 
 
-class MonitorAction(QAction):
-    def __init__(self, parent):
-        super().__init__()
-        self.setParent(parent)
-        self.setText("Monitor")
-        self.setStatusTip("open monitor")
-        self.setIcon(icon("line-graph.png"))
-
-        self.triggered.connect(self.clicked)
-
-    def clicked(self):
-        self.parent().add_sub_win(MonitorWidget())
-
-
 class DarkModeAction(QAction):
     def __init__(self):
         super().__init__()
@@ -1263,113 +1248,9 @@ class MainWindow(QMainWindow):
         dlg.show()
 
 
-def dark(app):
-    """ Apply Dark Theme to the Qt application instance.
-
-        Args:
-            app (QApplication): QApplication instance.
-    """
-
-    darkPalette = QPalette()
-
-    # base
-    darkPalette.setColor(QPalette.WindowText, QColor(180, 180, 180))
-    darkPalette.setColor(QPalette.Button, QColor(53, 53, 53))
-    darkPalette.setColor(QPalette.Light, QColor(180, 180, 180))
-    darkPalette.setColor(QPalette.Midlight, QColor(90, 90, 90))
-
-    darkPalette.setColor(QPalette.Dark, QColor(35, 35, 35))
-    darkPalette.setColor(QPalette.Text, QColor(180, 180, 180))
-    darkPalette.setColor(QPalette.BrightText, QColor(180, 180, 180))
-
-    darkPalette.setColor(QPalette.ButtonText, QColor(180, 180, 180))
-    darkPalette.setColor(QPalette.Base, QColor(42, 42, 42))
-    darkPalette.setColor(QPalette.Window, QColor(53, 53, 53))
-    darkPalette.setColor(QPalette.Shadow, QColor(20, 20, 20))
-
-    darkPalette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    darkPalette.setColor(QPalette.HighlightedText, QColor(180, 180, 180))
-    darkPalette.setColor(QPalette.Link, QColor(56, 252, 196))
-    darkPalette.setColor(QPalette.AlternateBase, QColor(66, 66, 66))
-
-    darkPalette.setColor(QPalette.ToolTipBase, QColor(53, 53, 53))
-    darkPalette.setColor(QPalette.ToolTipText, QColor(180, 180, 180))
-
-    darkPalette.setColor(QPalette.PlaceholderText, QColor(0, 0, 0))
-
-    # disabled
-    darkPalette.setColor(QPalette.Disabled, QPalette.WindowText,
-                         QColor(127, 127, 127))
-    darkPalette.setColor(QPalette.Disabled, QPalette.Text,
-                         QColor(127, 127, 127))
-    darkPalette.setColor(QPalette.Disabled, QPalette.ButtonText,
-                         QColor(127, 127, 127))
-    darkPalette.setColor(QPalette.Disabled, QPalette.Highlight,
-                         QColor(80, 80, 80))
-    darkPalette.setColor(QPalette.Disabled, QPalette.HighlightedText,
-                         QColor(127, 127, 127))
-
-    app.setPalette(darkPalette)
-
-
-def light(app):
-    """ Apply Light Theme to the Qt application instance.
-
-        Args:
-            app (QApplication): QApplication instance.
-    """
-
-    lightPalette = QPalette()
-
-    # base
-    lightPalette.setColor(QPalette.WindowText, QColor(0, 0, 0))
-    lightPalette.setColor(QPalette.Button, QColor(240, 240, 240))
-    lightPalette.setColor(QPalette.Light, QColor(180, 180, 180))
-    lightPalette.setColor(QPalette.Midlight, QColor(200, 200, 200))
-
-    lightPalette.setColor(QPalette.Dark, QColor(225, 225, 225))
-    lightPalette.setColor(QPalette.Text, QColor(0, 0, 0))
-    lightPalette.setColor(QPalette.BrightText, QColor(0, 0, 0))
-    lightPalette.setColor(QPalette.ButtonText, QColor(0, 0, 0))
-
-    lightPalette.setColor(QPalette.Base, QColor(237, 237, 237))
-    lightPalette.setColor(QPalette.Window, QColor(240, 240, 240))
-    lightPalette.setColor(QPalette.Shadow, QColor(20, 20, 20))
-    lightPalette.setColor(QPalette.Highlight, QColor(76, 163, 224))
-
-    lightPalette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
-    lightPalette.setColor(QPalette.Link, QColor(0, 162, 232))
-    lightPalette.setColor(QPalette.AlternateBase, QColor(225, 225, 225))
-    lightPalette.setColor(QPalette.ToolTipBase, QColor(240, 240, 240))
-
-    lightPalette.setColor(QPalette.ToolTipText, QColor(0, 0, 0))
-    # lightPalette.setColor(QPalette., QColor(0, 0, 0))
-
-    lightPalette.setColor(QPalette.PlaceholderText, QColor(240, 240, 240))
-
-    lightPalette.setColor(QPalette.Disabled, QPalette.WindowText,
-                          QColor(115, 115, 115))
-    lightPalette.setColor(QPalette.Disabled, QPalette.Text,
-                          QColor(115, 115, 115))
-    lightPalette.setColor(QPalette.Disabled, QPalette.ButtonText,
-                          QColor(115, 115, 115))
-    lightPalette.setColor(QPalette.Disabled, QPalette.Highlight,
-                          QColor(190, 190, 190))
-    lightPalette.setColor(QPalette.Disabled, QPalette.HighlightedText,
-                          QColor(115, 115, 115))
-
-    app.setPalette(lightPalette)
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # dark_stylesheet = qdarkstyle.load_stylesheet_pyside2()
-    # app.setStyle(dark_stylesheet)
     app.setStyle('Fusion')
     window = MainWindow()
-
-    # qtmodern.styles.dark(app)
-    # mw = qtmodern.windows.ModernWindow(window)
-    # mw.show()
     window.show()
     app.exec_()

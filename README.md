@@ -42,6 +42,8 @@ pyserial                          | 3.5
 PySide2                           | 5.15.2
 qtmodern                          | 0.2.0
 ViTables                          | 3.0.2
+PyVISA                            |1.11.3
+
 
 ---
 * ## Hardware
