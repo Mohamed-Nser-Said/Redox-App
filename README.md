@@ -97,8 +97,9 @@ synchronous system).
     [for more information](https://wiki.qt.io/Qt_for_Python)
     
     
-# **Main Dashboard** 
- <img src="https://github.com/Mohamed-Nser-Said/RDF_project/blob/main/icons/UI.gif?raw=true" alt="gui" width="700"/>
+# **Main UI** 
+ 
+ ![alt text](https://github.com/Mohamed-Nser-Said/RDF_project/blob/main/icons/UI.gif)
 
 
 
