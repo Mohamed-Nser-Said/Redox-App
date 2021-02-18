@@ -98,7 +98,7 @@ synchronous system).
     
     
 # **Main Dashboard** 
- <img src="https://github.com/Mohamed-Nser-Said/RDF_project/blob/main/icons/new_des.jpg?raw=true" alt="gui" width="700"/>
+ <img src="https://github.com/Mohamed-Nser-Said/RDF_project/blob/main/icons/UI.gif?raw=true" alt="gui" width="700"/>
 
 
 
