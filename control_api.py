@@ -7,6 +7,7 @@ from enum import Enum
 from modbus import ModbusBuilder
 import serial
 import time
+from abc import ABC, abstractmethod
 
 
 class RemoteManger:
@@ -150,7 +151,14 @@ class PortManger:
         return None
 
 
-class PumpModbusCommandSender:
+class PumpAbstract(ABC):
+
+    @abstractmethod
+    def send_pump(self):
+        pass
+
+
+class PumpModbusCommandSender(PumpAbstract):
     """
     this class manage the connection of the Pumps though the usb Ports, send the message
     with update connection method
@@ -158,21 +166,15 @@ class PumpModbusCommandSender:
 
     def send_pump(self, data, send_to):
         if self._update_connection():
+            try:
+                self._write_s(send_to, data)
 
-            if send_to == Pump.MASTER:
-                self._write_s(self.maste_pump_port, data)
-
-            elif send_to == Pump.SECOND:
-                self._write_s(self.second_pump_port, data)
-
-            elif send_to == Pump.BOTH:
-                self._write_s(self.maste_pump_port, data)
-                self._write_s(self.second_pump_port, data)
+            except Exception as e:
+                self.error_message(e)
 
     def _write_s(self, port, data):
         self.serial = serial.Serial(baudrate=9600, timeout=0.005, bytesize=8, stopbits=2,
                                     parity=serial.PARITY_NONE)
-
         self.serial.port = port
         self.serial.open()
         # with self.serial as s:
@@ -182,17 +184,15 @@ class PumpModbusCommandSender:
         self.serial.close()
 
     def _update_connection(self):
-        self.maste_pump_port = None
-        self.second_pump_port = None
-        if PortManger().get_number_of_pump_connected == 2:
-            self.maste_pump_port = PortManger().get_master_pump_port
-            self.second_pump_port = PortManger().get_second_pump_port
-        elif PortManger().get_number_of_pump_connected == 1:
-            self.maste_pump_port = PortManger().get_master_pump_port
-
+        if PortManger().get_number_of_pump_connected > 1:
+            return True
         else:
-            ErrorMassage("Error", "No pump was found, please check you connections")
+            self.error_message("No pump was found, please check you connections")
             return False
+
+    @staticmethod
+    def error_message(s):
+        ErrorMassage('Error', s)
 
 
 def find_my_pump(send_to):
@@ -240,7 +240,7 @@ def step_increase(start, stop, steps, duration, send_to):
 
 
 if __name__ == "__main__":
-    # m = ModbusBuilder()
+    m = ModbusBuilder()
     #
     # start_ = m.build_start().get_modbus
     # stop_ = m.build_stop().get_modbus
@@ -254,6 +254,6 @@ if __name__ == "__main__":
     # time.sleep(0.2)
     # p.send_pump(data=stop_, send_to=Pump.MASTER)
     # step_increase(5, 24, 5, 1, Pump.BOTH)
-    s = RemoteManger()
-    s.server_listen()
-    s.get_ports_list()
+    # s = RemoteManger()
+    # s.server_listen()
+    # s.get_ports_list()

@@ -6,7 +6,8 @@ import serial
 from PySide2.QtCore import QSize, Qt, QAbstractTableModel, Signal, QTimer, QRunnable, Slot, QThreadPool
 from PySide2.QtGui import QKeySequence, QSyntaxHighlighter, QTextCharFormat, QPixmap, QImage, QPalette, QColor
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtWidgets import QApplication, QMainWindow, QStatusBar, QToolBar, QFileDialog, QTabWidget, QTextEdit, QAction
+from PySide2.QtWidgets import QApplication, QMainWindow, QStatusBar, QToolBar, QFileDialog, QTabWidget, QTextEdit, \
+    QAction
 from PySide2.QtWidgets import QVBoxLayout, QScrollArea, QColorDialog, QListWidget, QAbstractItemView, QListWidgetItem
 from PySide2.QtWidgets import QLabel, QLineEdit, QGridLayout, QHBoxLayout, QGroupBox, QComboBox, QWidget, QPlainTextEdit
 from PySide2.QtWidgets import QMdiArea, QMdiSubWindow, QDockWidget, QTableView, QSizePolicy, QMessageBox, QPushButton
@@ -27,6 +28,34 @@ if not os.path.exists(MAIN_PROJECTS_SAVED_FILE):
     os.mkdir(MAIN_PROJECTS_SAVED_FILE)
 
 
+class PumpSingleReceiver:
+    def __init__(self):
+        self.data = None
+        self.pump_sender = PumpModbusCommandSender()
+        self.modbus = ModbusBuilder()
+
+    def data_manger(self, parameters):
+        if parameters['pump_mode'] == PumpMode.DECOUPLED:
+            if parameters['cmd'] == 'speed':
+                self.data = self.modbus.build_change_speed(parameters['speed']).get_modbus
+            elif parameters['cmd'] == 'direction':
+                self.data = self.modbus.build_flow_direction(parameters['direction']).get_modbus
+            elif parameters['cmd'] == 'button':
+                if parameters['button']:
+                    self.data = self.modbus.build_start().get_modbus
+                else:
+                    self.data = self.modbus.build_stop().get_modbus
+
+            port = self.name_filter(parameters['port'])
+            self.send(port, self.data)
+
+    def send(self, send_to, data):
+        self.pump_sender.send_pump(send_to=send_to, data=data)
+
+    def name_filter(self, s):
+        return s[s.find("(") + 1:-1]
+
+
 class GraphMaker(QMainWindow):
     def __init__(self, title="no title"):
         super().__init__()
@@ -40,7 +69,7 @@ class GraphMaker(QMainWindow):
         self.graphWidget.addLegend()
         self.graphWidget.showGrid(x=True, y=True)
 
-    def plot(self, x_data, y_data, plot_name='no name', color='b', x_axis_name="X Axis",  y_axis_name="Y Axis", size=3):
+    def plot(self, x_data, y_data, plot_name='no name', color='b', x_axis_name="X Axis", y_axis_name="Y Axis", size=3):
         styles = {"color": "0000", "font-size": "20px"}
         self.graphWidget.setLabel("left", y_axis_name, **styles)
         self.graphWidget.setLabel("bottom", x_axis_name, **styles)
@@ -73,7 +102,7 @@ class NewGraphAction(QAction):
             x_data = self.database.get_one_data_set(x_data)
             y_data = self.database.get_one_data_set(y_data)
             graph = GraphMaker(title)
-            graph.plot(x_data=x_data, y_data=y_data,color=self.color, plot_name=plot_name, x_axis_name=x_name,
+            graph.plot(x_data=x_data, y_data=y_data, color=self.color, plot_name=plot_name, x_axis_name=x_name,
                        y_axis_name=y_name, size=size)
             self.parent().add_sub_win(graph)
 
@@ -90,7 +119,7 @@ class NewGraphAction(QAction):
         self.CreateNewGraphDialog.cancel_QPushButton.clicked.connect(self.CreateNewGraphDialog.parent().hide)
 
     def color_dialog(self):
-        self.color =  QColorDialog.getColor()
+        self.color = QColorDialog.getColor()
 
 
 # ser = serial.Serial(port="COM5", baudrate=9600, timeout=1)
@@ -189,7 +218,7 @@ class GraphViewer(QMainWindow):
     def zoom_in(self):
         self.scale_image(1.25)
 
-    def zoom_out(self,):
+    def zoom_out(self, ):
         self.scale_image(0.8)
 
     def scale_image(self, factor):
@@ -250,6 +279,7 @@ class StepFunctionAction(QAction):
 
 class Capturing(list):
     "stack over flow"
+
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
@@ -417,7 +447,8 @@ class Highlighter(QSyntaxHighlighter):
         _format = QTextCharFormat()
         # _format.setFontWeight(QFont.Bold)
 
-        key_list_1 = ["Return", 'type', 'Parameter', '__init__()', 'False', 'None', 'True', 'and', 'as', 'break', 'class',
+        key_list_1 = ["Return", 'type', 'Parameter', '__init__()', 'False', 'None', 'True', 'and', 'as', 'break',
+                      'class',
                       'continue', 'float', 'def', 'elif', 'else', 'except', 'finally', 'for', 'from',
                       'if', 'import', 'in', 'is', 'lambda', 'not', 'or', 'pass', 'raise', 'return',
                       'try', 'while', 'with', 'not', 'yield', 'str', 'int', 'self', 'range', 'print', ]
@@ -739,8 +770,7 @@ class DataBase:
         self.create_new_data_set('current_data')
         self.create_new_data_set('x_data')
         self.create_new_data_set('data2')
-        self.create_new_data_set('data3', data=np.arange(300, 400)/100)
-
+        self.create_new_data_set('data3', data=np.arange(300, 400) / 100)
 
     # def create_new_table(self, table_name):
     #
@@ -759,6 +789,7 @@ class DataBase:
     #     except tb.exceptions.NodeError:
     #         return ErrorMassage("Name already exist", "this name is already exist\nplease try different name")
     #
+
     def create_new_data_set(self, name, data=np.array(np.random.random(100))):
         try:
             with h5py.File(self.main_file, "a") as f:
@@ -885,9 +916,16 @@ class PumpQWidget(QWidget):
         group_box_pump_mode.setLayout(layout_pump_mode)
 
         self.pump1 = PumpAbstract("Pump 1")
-        self.pump1.pump_send_state_QPushButton.clicked.connect(lambda: self.send_to_pump(self.pump1))
+        self.pump1.pump_speed_QDoubleSpinBox.valueChanged.connect(lambda: self.send_to_pump(self.pump1, 'speed'))
+        self.pump1.pump_direction_QComboBox.currentTextChanged.connect(
+            lambda: self.send_to_pump(self.pump1, 'direction'))
+        self.pump1.pump_send_state_QPushButton.clicked.connect(lambda: self.send_to_pump(self.pump1, 'button'))
+
         self.pump2 = PumpAbstract("Pump 2")
-        self.pump2.pump_send_state_QPushButton.clicked.connect(lambda: self.send_to_pump(self.pump2))
+        self.pump2.pump_speed_QDoubleSpinBox.valueChanged.connect(lambda: self.send_to_pump(self.pump2, 'speed'))
+        self.pump2.pump_direction_QComboBox.currentTextChanged.connect(
+            lambda: self.send_to_pump(self.pump2, 'direction'))
+        self.pump2.pump_send_state_QPushButton.clicked.connect(lambda: self.send_to_pump(self.pump2, 'button'))
         self.pump2.setDisabled(True)
 
         g_layout = QGridLayout()
@@ -908,12 +946,14 @@ class PumpQWidget(QWidget):
             self.pump2.setDisabled(False)
             self.pump_mode_state = PumpMode.DECOUPLED
 
-    def send_to_pump(self, pump):
+    def send_to_pump(self, pump, cmd):
         parameters = {
+            'cmd': cmd,
             'pump_mode': self.pump_mode_state,
             'port': pump.pump_port_selection_QComboBox.currentText(),
             'speed': pump.pump_speed_QDoubleSpinBox.value(),
-            'direction': pump.pump_direction_QComboBox.currentText()
+            'direction': pump.pump_direction_QComboBox.currentText(),
+            'button': pump.pump_send_state_QPushButton.isChecked()
         }
 
         self.PumpSignalSend.emit(parameters)
@@ -930,7 +970,7 @@ class PumpQWidget(QWidget):
                     self.pump2.pump_port_selection_QComboBox.addItems(s.get_ports_list())
 
                 except Exception as e:
-                    ErrorMassage("Error", "These is no connection, or the connection is lost")
+                    ErrorMassage("Error", e)
 
         elif self.connection_mode_QComboBox.currentText() == "USB-direct":
             self.pump1.pump_port_selection_QComboBox.addItems(usb_ports)
@@ -1087,6 +1127,7 @@ class MainWindow(QMainWindow):
         self.mdi = QMdiArea()
 
         # QDocks
+
         self.PumpQWidget = PumpQWidget()
         self.PumpQWidget_dock = CreateDockWindows(title="Pump control", parent=self, widget=self.PumpQWidget,
                                                   area=Qt.RightDockWidgetArea | Qt.BottomDockWidgetArea)
@@ -1124,7 +1165,8 @@ class MainWindow(QMainWindow):
         self.FileTreeViewer.FileOpenedSignal.connect(self.file_opened)
         self.NewProjectAction.NewProjectAddedSignal.connect(self.project_manger)
         self.OpenProjectAction.OpenProjectActionClickedSignal.connect(self.project_manger)
-        self.PumpQWidget.PumpSignalSend.connect(lambda _: print(_))
+        self.pump_single_receiver = PumpSingleReceiver()
+        self.PumpQWidget.PumpSignalSend.connect(self.pump_single_receiver.data_manger)
         self.RemoteAction.triggered.connect(self.remote_activated)
         # self.RemoteAction.triggered.connect(self.remote_trigger)
 
@@ -1195,17 +1237,17 @@ class MainWindow(QMainWindow):
         self.FileTreeViewer.project_name = name
         self.FileTreeViewer.new_project_added()
 
-    def set_disable_enable_widgets(self, boo):
-        self.remote_menu.setDisabled(boo)
-        self.tools.setDisabled(boo)
-        self.SCPICommandLine.setDisabled(boo)
-        self.CreateNotePadAction.setDisabled(boo)
-        self.FileTreeViewer.setDisabled(boo)
-        self.graph.setDisabled(boo)
-        self.table.setDisabled(boo)
-        self.PumpQWidget.setDisabled(boo)
-        self.CreatNewTableAction.setDisabled(boo)
-        if not boo:
+    def set_disable_enable_widgets(self, state):
+        self.remote_menu.setDisabled(state)
+        self.tools.setDisabled(state)
+        self.SCPICommandLine.setDisabled(state)
+        self.CreateNotePadAction.setDisabled(state)
+        self.FileTreeViewer.setDisabled(state)
+        self.graph.setDisabled(state)
+        self.table.setDisabled(state)
+        self.PumpQWidget.setDisabled(state)
+        self.CreatNewTableAction.setDisabled(state)
+        if not state:
             self.setCentralWidget(self.mdi)
 
     def add_sub_win(self, obj):
@@ -1249,8 +1291,8 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    window = MainWindow()
-    window.show()
-    app.exec_()
+    app = QApplication(sys.argv) # 1  we start the event loop
+    app.setStyle('Fusion') # 2 we set the Fusion style
+    window = MainWindow() # we make an instance of the mainWindow class
+    window.show() # we need to show the window
+    app.exec_() # lastly excute the app

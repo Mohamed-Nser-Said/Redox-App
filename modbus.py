@@ -179,3 +179,5 @@ if __name__ == "__main__":
 
     p = ModbusBuilder()
     print(p.build_start())
+    p.build_change_speed(new_speed=40)
+    print(p.get_modbus)

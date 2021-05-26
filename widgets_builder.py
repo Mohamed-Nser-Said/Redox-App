@@ -81,12 +81,12 @@ class PumpAbstract(QWidget):
 
         self.pump_direction_QLabel = QLabel('Direction')
         self.pump_direction_QComboBox = QComboBox()
-        self.pump_direction_QComboBox.addItems(["CW", "CCW"])
+        self.pump_direction_QComboBox.addItems(["cw", "ccw"])
         layout.addWidget(self.pump_direction_QLabel, 2, 0)
         layout.addWidget(self.pump_direction_QComboBox, 2, 1)
 
-        self.pump_send_state_QPushButton = QPushButton("send")
-        # self.pump_send_state_QPushButton.setCheckable(True)
+        self.pump_send_state_QPushButton = QPushButton("State")
+        self.pump_send_state_QPushButton.setCheckable(True)
         layout.addWidget(self.pump_send_state_QPushButton, 3, 1)
         layout.setSpacing(3)
         group_box_pump = QGroupBox(name)

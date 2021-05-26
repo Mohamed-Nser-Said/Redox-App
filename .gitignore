@@ -10,3 +10,4 @@ ignor_/procedure.py
 ignor_
 _main.py
 __pycache__
+fbsenv
